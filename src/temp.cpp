@@ -1,4 +1,4 @@
-#include "Alex80u.h"
+#include "ALEX80u.h"
 
 namespace {
 
@@ -30,27 +30,27 @@ inline void writeR4Port(
 
 // PRIVATE -----------------------------------------
 
-void Alex80u::mcp1_pinMode(int pin, byte mode) {
+void ALEX80u::mcp1_pinMode(int pin, byte mode) {
   this->mcp1.pinMode(pin, mode);
 }
 
-void Alex80u::mcp2_pinMode(int pin, byte mode) {
+void ALEX80u::mcp2_pinMode(int pin, byte mode) {
   this->mcp2.pinMode(pin, mode);
 }
 
-void Alex80u::mcp2_digitalWrite(int pin, byte value) {
+void ALEX80u::mcp2_digitalWrite(int pin, byte value) {
   this->mcp2.digitalWrite(pin, value);
 }
 
 
 // PUBLIC -----------------------------------------
 
-Alex80u::Alex80u(unsigned long ram_speed, unsigned long mcp_speed) {
+ALEX80u::ALEX80u(unsigned long ram_speed, unsigned long mcp_speed) {
   this->rs = ram_speed;
   this->ms = mcp_speed;
 }
 
-void Alex80u::begin_UNO() {
+void ALEX80u::begin_UNO() {
   // Imposto il DataBus in Input
   pinMode(3, INPUT);   // D0
   pinMode(4, INPUT);   // D1
@@ -72,13 +72,13 @@ void Alex80u::begin_UNO() {
   set_WAIT(HIGH);
 }
 
-void Alex80u::begin_RAM() {
+void ALEX80u::begin_RAM() {
   this->spiBus.begin(SPI);
   delay(1);
   this->sram.begin(8, this->spiBus, this->rs);
 }
 
-void Alex80u::begin_MCP() {
+void ALEX80u::begin_MCP() {
   this->spiBus.begin(SPI);
   delay(1);
   this->mcp1.begin(10, this->spiBus, this->ms);
@@ -123,7 +123,7 @@ void Alex80u::begin_MCP() {
   this->mcp2_digitalWrite(10, HIGH);  // BUSRQ
 }
 
-void Alex80u::set_CLK(byte mode) {
+void ALEX80u::set_CLK(byte mode) {
 #if defined(ARDUINO_AVR_UNO)
   if (mode == LOW) {
     PORTD &= static_cast<uint8_t>(~_BV(2));
@@ -147,7 +147,7 @@ void Alex80u::set_CLK(byte mode) {
 #endif
 }
 
-void Alex80u::set_INT(byte mode) {
+void ALEX80u::set_INT(byte mode) {
 #if defined(ARDUINO_AVR_UNO)
   if (mode == LOW) {
     PORTC &= static_cast<uint8_t>(~_BV(0));
@@ -165,7 +165,7 @@ void Alex80u::set_INT(byte mode) {
 #endif
 }
 
-void Alex80u::set_NMI(byte mode) {
+void ALEX80u::set_NMI(byte mode) {
 #if defined(ARDUINO_AVR_UNO)
   if (mode == LOW) {
     PORTC &= static_cast<uint8_t>(~_BV(1));
@@ -183,7 +183,7 @@ void Alex80u::set_NMI(byte mode) {
 #endif
 }
 
-void Alex80u::set_WAIT(byte mode) {
+void ALEX80u::set_WAIT(byte mode) {
 #if defined(ARDUINO_AVR_UNO)
   if (mode == LOW) {
     PORTC &= static_cast<uint8_t>(~_BV(2));
@@ -201,15 +201,15 @@ void Alex80u::set_WAIT(byte mode) {
 #endif
 }
 
-void Alex80u::set_RST(byte mode) {
+void ALEX80u::set_RST(byte mode) {
   this->mcp2_digitalWrite(0, mode);
 }
 
-void Alex80u::set_BUSRQ(byte mode) {
+void ALEX80u::set_BUSRQ(byte mode) {
   this->mcp2_digitalWrite(10, mode);
 }
 
-uint16_t Alex80u::read_ADDR() {
+uint16_t ALEX80u::read_ADDR() {
   uint16_t mcp1Value;
   uint16_t mcp2Value;
   FastMcp23s17::readGPIO16Pair(
@@ -223,14 +223,14 @@ uint16_t Alex80u::read_ADDR() {
       ((mcp2Value << 6) & 0xc000U);
 }
 
-uint8_t Alex80u::read_CMD() {
+uint8_t ALEX80u::read_CMD() {
   const uint16_t value = this->mcp2.readGPIO16();
   return
       static_cast<uint8_t>((value >> 1) & 0x3fU) |
       static_cast<uint8_t>((value >> 5) & 0xc0U);
 }
 
-void Alex80u::pinMode_DATA(byte mode) {
+void ALEX80u::pinMode_DATA(byte mode) {
 #if defined(ARDUINO_AVR_UNO)
   if (mode == OUTPUT) {
     DDRD |= AVR_DATA_PORTD_MASK;
@@ -270,7 +270,7 @@ void Alex80u::pinMode_DATA(byte mode) {
 #endif
 }
 
-uint8_t Alex80u::read_DATA() {
+uint8_t ALEX80u::read_DATA() {
 #if defined(ARDUINO_AVR_UNO)
   return
       static_cast<uint8_t>((PIND >> 3) & 0x1fU) |
@@ -309,7 +309,7 @@ uint8_t Alex80u::read_DATA() {
 #endif
 }
 
-void Alex80u::write_DATA(uint8_t val) {
+void ALEX80u::write_DATA(uint8_t val) {
 #if defined(ARDUINO_AVR_UNO)
   const uint8_t savedSreg = SREG;
   noInterrupts();
@@ -352,10 +352,10 @@ void Alex80u::write_DATA(uint8_t val) {
 #endif
 }
 
-uint8_t Alex80u::read_RAM(uint16_t ind) {
+uint8_t ALEX80u::read_RAM(uint16_t ind) {
   return this->sram.read8(ind);
 }
 
-void Alex80u::write_RAM(uint16_t ind, uint8_t val) {
+void ALEX80u::write_RAM(uint16_t ind, uint8_t val) {
   this->sram.write8(ind, val);
 }
