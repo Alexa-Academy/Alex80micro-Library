@@ -1,4 +1,4 @@
-#include "ALEX80micro.h"
+#include "ALEX80u.h"
 
 // UNO R3
 #define MCP_SPEED 8000000
@@ -10,7 +10,7 @@
 //#define MCP_SPEED 10000000
 //#define SER_SPEED 115200
 
-Alex80u a80u(RAM_SPEED, MCP_SPEED);
+ALEX80u a80u(RAM_SPEED, MCP_SPEED);
 
 uint16_t Addr = 0x0000;
 uint8_t Data = 0x00;

@@ -1,8 +1,8 @@
-# ALEX80micro Arduino Library
+# ALEX80u Arduino Library
 
 ## Overview
 
-The ALEX80micro Arduino Library is designed to simplify the development and experimentation process with the ALEX80µ educational computer system.
+The ALEX80u Arduino Library is designed to simplify the development and experimentation process with the ALEX80µ educational computer system.
 
 ALEX80µ is a compact Z80-based educational computer designed as an Arduino Uno shield. Its purpose is to provide a practical and accessible way to explore how a classic microcomputer operates. By exposing the CPU, memory, buses, and input/output devices, ALEX80µ allows students, makers, and electronics enthusiasts to study computer architecture and low-level programming through hands-on experimentation. The Arduino Uno serves as a companion controller, simplifying program loading, debugging, and interaction with the Z80 system.
 

@@ -1,9 +1,9 @@
-#include "Alex80u.h"
+#include "ALEX80u.h"
 
 
 // PRIVATE -----------------------------------------
 
-void Alex80u::mcp1_pinMode(int pin, byte mode) {
+void ALEX80u::mcp1_pinMode(int pin, byte mode) {
   uint8_t reg;
   if (pin < 8) reg = 0x00;
   else reg = 0x01;
@@ -13,7 +13,7 @@ void Alex80u::mcp1_pinMode(int pin, byte mode) {
   this->mcpWrite(10, reg, iodir);
 }
 
-void Alex80u::mcp2_pinMode(int pin, byte mode) {
+void ALEX80u::mcp2_pinMode(int pin, byte mode) {
   uint8_t reg;
   if (pin < 8) reg = 0x00;
   else reg = 0x01;
@@ -23,7 +23,7 @@ void Alex80u::mcp2_pinMode(int pin, byte mode) {
   this->mcpWrite(9, reg, iodir);
 }
 
-void Alex80u::mcp2_digitalWrite(int pin, byte value) {
+void ALEX80u::mcp2_digitalWrite(int pin, byte value) {
   uint8_t reg;
   if (pin < 8) reg = 0x14;
   else reg = 0x15;
@@ -33,7 +33,7 @@ void Alex80u::mcp2_digitalWrite(int pin, byte value) {
   this->mcpWrite(9, reg, olat);
 }
 
-void Alex80u::mcpWrite(uint8_t cs, uint8_t reg, uint8_t data) {
+void ALEX80u::mcpWrite(uint8_t cs, uint8_t reg, uint8_t data) {
   SPI.beginTransaction(SPISettings(this->ms, MSBFIRST, SPI_MODE0));
   digitalWrite(cs, LOW);
   SPI.transfer(0x40);
@@ -43,7 +43,7 @@ void Alex80u::mcpWrite(uint8_t cs, uint8_t reg, uint8_t data) {
   SPI.endTransaction();
 }
 
-uint8_t Alex80u::mcpRead(uint8_t cs, uint8_t reg) {
+uint8_t ALEX80u::mcpRead(uint8_t cs, uint8_t reg) {
   byte value;
   SPI.beginTransaction(SPISettings(this->ms, MSBFIRST, SPI_MODE0));
   digitalWrite(cs, LOW);
@@ -58,12 +58,12 @@ uint8_t Alex80u::mcpRead(uint8_t cs, uint8_t reg) {
 
 // PUBLIC -----------------------------------------
 
-Alex80u::Alex80u(unsigned long ram_speed, unsigned long mcp_speed) {
+ALEX80u::ALEX80u(unsigned long ram_speed, unsigned long mcp_speed) {
   this->rs = ram_speed;
   this->ms = mcp_speed;
 }
 
-void Alex80u::begin_UNO() {
+void ALEX80u::begin_UNO() {
   // Imposto il DataBus in Input
   pinMode(3, INPUT);   // D0
   pinMode(4, INPUT);   // D1
@@ -85,7 +85,7 @@ void Alex80u::begin_UNO() {
   digitalWrite(A2, HIGH);  // WAIT
 }
 
-void Alex80u::begin_RAM() {
+void ALEX80u::begin_RAM() {
   SPI.begin();
   pinMode(8, OUTPUT);
   digitalWrite(8, HIGH);
@@ -98,7 +98,7 @@ void Alex80u::begin_RAM() {
   SPI.endTransaction();
 }
 
-void Alex80u::begin_MCP() {
+void ALEX80u::begin_MCP() {
   // Imposto i CS
   SPI.begin();
   pinMode(9, OUTPUT);   // CS MCP2
@@ -146,31 +146,31 @@ void Alex80u::begin_MCP() {
   this->mcp2_digitalWrite(10, HIGH);  // BUSRQ
 }
 
-void Alex80u::set_CLK(byte mode) {
+void ALEX80u::set_CLK(byte mode) {
   digitalWrite(2, mode);
 }
 
-void Alex80u::set_INT(byte mode) {
+void ALEX80u::set_INT(byte mode) {
   digitalWrite(A0, mode);
 }
 
-void Alex80u::set_NMI(byte mode) {
+void ALEX80u::set_NMI(byte mode) {
   digitalWrite(A1, mode);
 }
 
-void Alex80u::set_WAIT(byte mode) {
+void ALEX80u::set_WAIT(byte mode) {
   digitalWrite(A2, mode);
 }
 
-void Alex80u::set_RST(byte mode) {
+void ALEX80u::set_RST(byte mode) {
   this->mcp2_digitalWrite(0, mode);
 }
 
-void Alex80u::set_BUSRQ(byte mode) {
+void ALEX80u::set_BUSRQ(byte mode) {
   this->mcp2_digitalWrite(10, mode);
 }
 
-uint16_t Alex80u::read_ADDR() {
+uint16_t ALEX80u::read_ADDR() {
   uint16_t ret;
   uint8_t addr_a = this->mcpRead(10, 0x12);  // MCP1 port A
   uint8_t addr_b = this->mcpRead(10, 0x13);  // MCP1 port B
@@ -194,7 +194,7 @@ uint16_t Alex80u::read_ADDR() {
   return ret;
 }
 
-uint8_t Alex80u::read_CMD() {
+uint8_t ALEX80u::read_CMD() {
   uint8_t ret;
   uint8_t cmd_a = this->mcpRead(9, 0x12);  // MCP2 port A
   uint8_t cmd_b = this->mcpRead(9, 0x13);  // MCP2 port B
@@ -209,7 +209,7 @@ uint8_t Alex80u::read_CMD() {
   return ret;
 }
 
-void Alex80u::pinMode_DATA(byte mode) {
+void ALEX80u::pinMode_DATA(byte mode) {
   if (mode == OUTPUT) {
     pinMode(3, OUTPUT);   // D0
     pinMode(4, OUTPUT);   // D1
@@ -231,7 +231,7 @@ void Alex80u::pinMode_DATA(byte mode) {
   }
 }
 
-uint8_t Alex80u::read_DATA() {
+uint8_t ALEX80u::read_DATA() {
   uint8_t ret;
   bitWrite(ret, 0, digitalRead(3));
   bitWrite(ret, 1, digitalRead(4));
@@ -244,7 +244,7 @@ uint8_t Alex80u::read_DATA() {
   return ret;
 }
 
-void Alex80u::write_DATA(uint8_t val) {
+void ALEX80u::write_DATA(uint8_t val) {
   digitalWrite(3, bitRead(val, 0));
   digitalWrite(4, bitRead(val, 1));
   digitalWrite(5, bitRead(val, 2));
@@ -255,7 +255,7 @@ void Alex80u::write_DATA(uint8_t val) {
   digitalWrite(A5, bitRead(val, 7));
 }
 
-uint8_t Alex80u::read_RAM(uint16_t ind) {
+uint8_t ALEX80u::read_RAM(uint16_t ind) {
   SPI.beginTransaction(SPISettings(this->rs, MSBFIRST, SPI_MODE0));
   digitalWrite(8, LOW);  // CS RAM
   SPI.transfer(0x03);    // READ
@@ -267,7 +267,7 @@ uint8_t Alex80u::read_RAM(uint16_t ind) {
   return ret;
 }
 
-void Alex80u::write_RAM(uint16_t ind, uint8_t val) {
+void ALEX80u::write_RAM(uint16_t ind, uint8_t val) {
   SPI.beginTransaction(SPISettings(this->rs, MSBFIRST, SPI_MODE0));
   digitalWrite(8, LOW);  // CS RAM
   SPI.transfer(0x02);    // WRITE

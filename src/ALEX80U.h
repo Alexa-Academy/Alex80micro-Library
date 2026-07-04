@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-class Alex80u {
+class ALEX80u {
 
 private:
   unsigned long rs;  // Ram Spi Speed
@@ -18,7 +18,7 @@ private:
 
 
 public:
-  Alex80u(unsigned long ram_speed, unsigned long mcp_speed);
+  ALEX80u(unsigned long ram_speed, unsigned long mcp_speed);
 
   void begin_UNO();  // Imposta Input ed Output di Arduino UNO
   void begin_RAM();  // Inizializza la Ram
