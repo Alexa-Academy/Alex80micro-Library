@@ -80,3 +80,9 @@ test_build/
 # Basic source
 # =========================
 basic/
+
+
+# =========================
+# Auxiliary documentation
+# =========================
+docu/

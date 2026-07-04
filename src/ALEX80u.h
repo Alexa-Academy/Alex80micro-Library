@@ -16,6 +16,8 @@ private:
   FastMcp23s17 mcp1;
   FastMcp23s17 mcp2;
   FastSram sram;
+  uint16_t mcp2Snapshot = 0;
+  bool mcp2SnapshotValid = false;
 
   void mcp1_pinMode(int pin, byte mode);
   void mcp2_pinMode(int pin, byte mode);
@@ -38,6 +40,7 @@ public:
 
   uint16_t read_ADDR();  // Lettura AddressBus
   uint8_t read_CMD();    // b0: HALT | b1: RFSH | b2: M1 | b3: IORQ | b4: MREQ | b5: WR | b6: BUSAK | b7: RD
+  void read_BUS(uint16_t &address, uint8_t &command);  // Snapshot coerente AddressBus + CommandBus
 
   void pinMode_DATA(byte mode);  // INPUT | OUTPUT - Direzione DataBus
   uint8_t read_DATA();           // Lettura DataBus

@@ -25,6 +25,19 @@ inline void writeR4Port(
 }
 #endif
 
+inline uint16_t decodeAddress(uint16_t mcp1Value, uint16_t mcp2Value) {
+  return
+      (mcp1Value & 0x007fU) |
+      ((mcp1Value >> 1) & 0x3f80U) |
+      ((mcp2Value << 6) & 0xc000U);
+}
+
+inline uint8_t decodeCommand(uint16_t mcp2Value) {
+  return
+      static_cast<uint8_t>((mcp2Value >> 1) & 0x3fU) |
+      static_cast<uint8_t>((mcp2Value >> 5) & 0xc0U);
+}
+
 }  // namespace
 
 
@@ -212,22 +225,37 @@ void ALEX80u::set_BUSRQ(byte mode) {
 uint16_t ALEX80u::read_ADDR() {
   uint16_t mcp1Value;
   uint16_t mcp2Value;
+  if (this->mcp2SnapshotValid) {
+    mcp1Value = this->mcp1.readGPIO16();
+    mcp2Value = this->mcp2Snapshot;
+    this->mcp2SnapshotValid = false;
+  } else {
+    FastMcp23s17::readGPIO16Pair(
+        this->mcp1,
+        this->mcp2,
+        mcp1Value,
+        mcp2Value);
+  }
+  return decodeAddress(mcp1Value, mcp2Value);
+}
+
+uint8_t ALEX80u::read_CMD() {
+  this->mcp2Snapshot = this->mcp2.readGPIO16();
+  this->mcp2SnapshotValid = true;
+  return decodeCommand(this->mcp2Snapshot);
+}
+
+void ALEX80u::read_BUS(uint16_t &address, uint8_t &command) {
+  uint16_t mcp1Value;
+  uint16_t mcp2Value;
   FastMcp23s17::readGPIO16Pair(
       this->mcp1,
       this->mcp2,
       mcp1Value,
       mcp2Value);
-  return
-      (mcp1Value & 0x007fU) |
-      ((mcp1Value >> 1) & 0x3f80U) |
-      ((mcp2Value << 6) & 0xc000U);
-}
-
-uint8_t ALEX80u::read_CMD() {
-  const uint16_t value = this->mcp2.readGPIO16();
-  return
-      static_cast<uint8_t>((value >> 1) & 0x3fU) |
-      static_cast<uint8_t>((value >> 5) & 0xc0U);
+  this->mcp2SnapshotValid = false;
+  address = decodeAddress(mcp1Value, mcp2Value);
+  command = decodeCommand(mcp2Value);
 }
 
 void ALEX80u::pinMode_DATA(byte mode) {
