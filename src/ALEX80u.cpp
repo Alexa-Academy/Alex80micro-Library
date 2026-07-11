@@ -6,7 +6,7 @@
 void ALEX80u::mcp1_pinMode(int pin, byte mode) {
     uint8_t reg = (pin < 8) ? 0x00 : 0x01;
     uint8_t bit = pin & 0x07;
-    uint8_t iodir = this->mcpRead(10, reg);
+    uint8_t iodir = mcpRead(10, reg);
     if (mode == OUTPUT) iodir &= ~(1 << bit);
     else if (mode == INPUT) iodir |= (1 << bit);
 
@@ -16,7 +16,7 @@ void ALEX80u::mcp1_pinMode(int pin, byte mode) {
 void ALEX80u::mcp2_pinMode(int pin, byte mode) {
     uint8_t reg = (pin < 8) ? 0x00 : 0x01;
     uint8_t bit = pin & 0x07;
-    uint8_t iodir = this->mcpRead(9, reg);
+    uint8_t iodir = mcpRead(9, reg);
     if (mode == OUTPUT) iodir &= ~(1 << bit);
     else if (mode == INPUT) iodir |= (1 << bit);
 
@@ -34,7 +34,7 @@ void ALEX80u::mcp2_digitalWrite(int pin, byte value) {
 }
 
 void ALEX80u::mcpWrite(uint8_t cs, uint8_t reg, uint8_t data) {
-  SPI.beginTransaction(SPISettings(this->ms, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(ms, MSBFIRST, SPI_MODE0));
   digitalWrite(cs, LOW);
   SPI.transfer(0x40);
   SPI.transfer(reg);
@@ -45,7 +45,7 @@ void ALEX80u::mcpWrite(uint8_t cs, uint8_t reg, uint8_t data) {
 
 uint8_t ALEX80u::mcpRead(uint8_t cs, uint8_t reg) {
   byte value;
-  SPI.beginTransaction(SPISettings(this->ms, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(ms, MSBFIRST, SPI_MODE0));
   digitalWrite(cs, LOW);
   SPI.transfer(0x41);
   SPI.transfer(reg);
@@ -87,7 +87,7 @@ void ALEX80u::begin_RAM() {
   pinMode(8, OUTPUT);
   digitalWrite(8, HIGH);
   delay(1);
-  SPI.beginTransaction(SPISettings(this->rs, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(rs, MSBFIRST, SPI_MODE0));
   digitalWrite(8, LOW);
   SPI.transfer(0x01);  // WRITE MODE REGISTER
   SPI.transfer(0x00);  // MODE BYTE
@@ -249,7 +249,7 @@ void ALEX80u::write_DATA(uint8_t val) {
 }
 
 uint8_t ALEX80u::read_RAM(uint16_t ind) {
-  SPI.beginTransaction(SPISettings(this->rs, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(rs, MSBFIRST, SPI_MODE0));
   digitalWrite(8, LOW);  // CS RAM
   SPI.transfer(0x03);    // READ
   SPI.transfer(0x00);
@@ -261,7 +261,7 @@ uint8_t ALEX80u::read_RAM(uint16_t ind) {
 }
 
 void ALEX80u::write_RAM(uint16_t ind, uint8_t val) {
-  SPI.beginTransaction(SPISettings(this->rs, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(rs, MSBFIRST, SPI_MODE0));
   digitalWrite(8, LOW);  // CS RAM
   SPI.transfer(0x02);    // WRITE
   SPI.transfer(0x00);
