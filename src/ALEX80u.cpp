@@ -44,7 +44,6 @@ void ALEX80u::begin_UNO() {
 
 void ALEX80u::begin_RAM() {
   spiBus.begin(SPI);
-  delay(1);
   sram.begin(8, spiBus, rs);
 }
 
