@@ -5,11 +5,10 @@
 
 class FastMcp23s17 {
 public:
-  bool begin(
+  void begin(
       uint8_t chipSelectPin,
       FastSpiBus &bus,
       uint32_t clockHz);
-  bool isResponsive() const;
 
   void pinMode(uint8_t pin, uint8_t mode);
   void digitalWrite(uint8_t pin, uint8_t value);
@@ -41,7 +40,6 @@ private:
   uint8_t direction_[2] = {0xff, 0xff};
   uint8_t pullup_[2] = {0x00, 0x00};
   uint8_t output_[2] = {0x00, 0x00};
-  bool responsive_ = false;
 };
 
 #endif

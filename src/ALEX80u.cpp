@@ -21,7 +21,7 @@ void ALEX80u::mcp2_digitalWrite(int pin, byte value) {
 ALEX80u::ALEX80u(unsigned long ram_speed, unsigned long mcp_speed) : rs(ram_speed), ms(mcp_speed) {}
 
 void ALEX80u::begin_UNO() {
-    // Imposto il DataBus in Input
+    // Set the data bus as input.
     pinMode(3, INPUT);   // D0
     pinMode(4, INPUT);   // D1
     pinMode(5, INPUT);   // D2
@@ -30,12 +30,12 @@ void ALEX80u::begin_UNO() {
     pinMode(A3, INPUT);  // D5
     pinMode(A4, INPUT);  // D6
     pinMode(A5, INPUT);  // D7
-    // Inizializzo le Uscite
+    // Initialize the outputs.
     pinMode(2, OUTPUT);   // CLK
     pinMode(A0, OUTPUT);  // INT
     pinMode(A1, OUTPUT);  // NMI
     pinMode(A2, OUTPUT);  // WAIT
-    // Imposto lo stato delle uscite
+    // Set the output states.
     digitalWrite(2, LOW);    // CLK
     digitalWrite(A0, HIGH);  // INT
     digitalWrite(A1, HIGH);  // NMI
@@ -50,15 +50,13 @@ void ALEX80u::begin_RAM() {
 
 void ALEX80u::begin_MCP() {
     spiBus.begin(SPI);
-    delay(1);
     mcp1.begin(10, spiBus, ms);
     mcp2.begin(9, spiBus, ms);
-    delay(1);
 
     mcp2_digitalWrite(0, HIGH);   // RST
     mcp2_digitalWrite(10, HIGH);  // BUSRQ
   
-    // Inizializzo i pin di MCP1
+    // Initialize MCP1 pins.
     mcp1_pinMode(0, INPUT);  // A0
     mcp1_pinMode(1, INPUT);  // A1
     mcp1_pinMode(2, INPUT);  // A2
@@ -73,7 +71,7 @@ void ALEX80u::begin_MCP() {
     mcp1_pinMode(12, INPUT);  // A11
     mcp1_pinMode(13, INPUT);  // A12
     mcp1_pinMode(14, INPUT);  // A13
-    // Inizializzo i pin di MCP2
+    // Initialize MCP2 pins.
     mcp2_pinMode(0, OUTPUT);  // RST
     mcp2_pinMode(1, INPUT);   // HALT
     mcp2_pinMode(2, INPUT);   // RFSH

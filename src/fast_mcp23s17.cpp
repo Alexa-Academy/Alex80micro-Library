@@ -9,30 +9,14 @@ constexpr uint8_t REG_GPIOA = 0x12;
 constexpr uint8_t REG_OLATA = 0x14;
 }  // namespace
 
-bool FastMcp23s17::begin(
-    uint8_t chipSelectPin,
-    FastSpiBus &bus,
-    uint32_t clockHz) {
-  chipSelectPin_ = chipSelectPin;
-  clockHz_ = clockHz;
-  bus_ = &bus;
-  bus_->begin();
-  bus_->deselect(chipSelectPin_);
+void FastMcp23s17::begin(uint8_t chipSelectPin, FastSpiBus &bus, uint32_t clockHz) {
+    chipSelectPin_ = chipSelectPin;
+    clockHz_ = clockHz;
+    bus_ = &bus;
+    bus_->begin();
+    bus_->deselect(chipSelectPin_);
 
-  writeRegister(REG_IODIRA, direction_[0]);
-  writeRegister(REG_IODIRA + 1, direction_[1]);
-  writeRegister(REG_GPPUA, pullup_[0]);
-  writeRegister(REG_GPPUA + 1, pullup_[1]);
-  writeRegister(REG_OLATA, output_[0]);
-  writeRegister(REG_OLATA + 1, output_[1]);
-  responsive_ =
-      readRegister(REG_IODIRA) == direction_[0] &&
-      readRegister(REG_IODIRA + 1) == direction_[1];
-  return responsive_;
-}
-
-bool FastMcp23s17::isResponsive() const {
-  return responsive_;
+    // The MCP23S17 reset values already match direction_, pullup_ and output_.
 }
 
 void FastMcp23s17::pinMode(uint8_t pin, uint8_t mode) {
@@ -41,6 +25,8 @@ void FastMcp23s17::pinMode(uint8_t pin, uint8_t mode) {
   }
   const uint8_t port = pin >> 3;
   const uint8_t mask = 1U << (pin & 0x07U);
+  const uint8_t previousDirection = direction_[port];
+  const uint8_t previousPullup = pullup_[port];
 
   if (mode == OUTPUT) {
     direction_[port] &= static_cast<uint8_t>(~mask);
@@ -54,8 +40,12 @@ void FastMcp23s17::pinMode(uint8_t pin, uint8_t mode) {
     }
   }
 
-  writeRegister(REG_IODIRA + port, direction_[port]);
-  writeRegister(REG_GPPUA + port, pullup_[port]);
+  if (direction_[port] != previousDirection) {
+    writeRegister(REG_IODIRA + port, direction_[port]);
+  }
+  if (pullup_[port] != previousPullup) {
+    writeRegister(REG_GPPUA + port, pullup_[port]);
+  }
 }
 
 void FastMcp23s17::digitalWrite(uint8_t pin, uint8_t value) {
@@ -87,18 +77,14 @@ uint16_t FastMcp23s17::readGPIO16() {
   return readRegisters(REG_GPIOA);
 }
 
-void FastMcp23s17::readGPIO16Pair(
-    FastMcp23s17 &first,
-    FastMcp23s17 &second,
-    uint16_t &firstValue,
-    uint16_t &secondValue) {
+void FastMcp23s17::readGPIO16Pair(FastMcp23s17 &first, FastMcp23s17 &second, uint16_t &firstValue, uint16_t &secondValue) {
   FastSpiBus *bus = first.bus_;
   bus->beginTransfer(first.clockHz_);
   bus->select(first.chipSelectPin_);
   firstValue = first.readRegistersSelected(REG_GPIOA);
   bus->deselect(first.chipSelectPin_);
 
-  if (second.bus_ == bus && second.clockHz_ == first.clockHz_) {
+if (second.bus_ == bus && second.clockHz_ == first.clockHz_) {
     bus->select(second.chipSelectPin_);
     secondValue = second.readRegistersSelected(REG_GPIOA);
     bus->deselect(second.chipSelectPin_);

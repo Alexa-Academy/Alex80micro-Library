@@ -10,8 +10,8 @@
 class ALEX80u {
 
 private:
-  unsigned long rs;  // Ram Spi Speed
-  unsigned long ms;  // Mcp Spi Speed
+  unsigned long rs;  // SRAM SPI speed
+  unsigned long ms;  // MCP SPI speed
   FastSpiBus spiBus;
   FastMcp23s17 mcp1;
   FastMcp23s17 mcp2;
@@ -25,26 +25,26 @@ private:
 public:
   ALEX80u(unsigned long ram_speed, unsigned long mcp_speed);
 
-  void begin_UNO();  // Imposta Input ed Output di Arduino UNO
-  void begin_RAM();  // Inizializza la Ram
-  void begin_MCP();  // Imposta Input ed Output dei due Mcp
+  void begin_UNO();  // Configures Arduino Uno inputs and outputs
+  void begin_RAM();  // Initializes the SRAM
+  void begin_MCP();  // Configures inputs and outputs of both MCPs
 
-  void set_CLK(byte mode);    // HIGH | LOW - Imposta lo stato del pin CLK
-  void set_INT(byte mode);    // HIGH | LOW - Imposta lo stato del pin INT
-  void set_NMI(byte mode);    // HIGH | LOW - Imposta lo stato del pin NMI
-  void set_WAIT(byte mode);   // HIGH | LOW - Imposta lo stato del pin WAIT
-  void set_RST(byte mode);    // HIGH | LOW - Imposta lo stato del pin RST
-  void set_BUSRQ(byte mode);  // HIGH | LOW - Imposta lo stato del pin BUSRQ
+  void set_CLK(byte mode);    // HIGH | LOW - Sets the CLK pin state
+  void set_INT(byte mode);    // HIGH | LOW - Sets the INT pin state
+  void set_NMI(byte mode);    // HIGH | LOW - Sets the NMI pin state
+  void set_WAIT(byte mode);   // HIGH | LOW - Sets the WAIT pin state
+  void set_RST(byte mode);    // HIGH | LOW - Sets the RST pin state
+  void set_BUSRQ(byte mode);  // HIGH | LOW - Sets the BUSRQ pin state
 
-  uint16_t read_ADDR();  // Lettura AddressBus
+  uint16_t read_ADDR();  // Reads the address bus
   uint8_t read_CMD();    // b0: HALT | b1: RFSH | b2: M1 | b3: IORQ | b4: MREQ | b5: WR | b6: BUSAK | b7: RD
 
-  void pinMode_DATA(byte mode);  // INPUT | OUTPUT - Direzione DataBus
-  uint8_t read_DATA();           // Lettura DataBus
-  void write_DATA(uint8_t val);  // Scrittura DataBus
+  void pinMode_DATA(byte mode);  // INPUT | OUTPUT - Sets the data-bus direction
+  uint8_t read_DATA();           // Reads the data bus
+  void write_DATA(uint8_t val);  // Writes the data bus
 
-  uint8_t read_RAM(uint16_t ind);             // Lettura Ram
-  void write_RAM(uint16_t ind, uint8_t val);  // Scrittura Ram
+  uint8_t read_RAM(uint16_t ind);             // Reads SRAM
+  void write_RAM(uint16_t ind, uint8_t val);  // Writes SRAM
 };
 
 #endif

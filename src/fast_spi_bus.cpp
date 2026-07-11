@@ -14,10 +14,14 @@ inline bool usesDirectSpi(SPIClass *spi) {
 void FastSpiBus::begin(SPIClass &spi) {
   spi_ = &spi;
   if (!initialized_) {
-    // Disattiva tutti i dispositivi dello shield prima di abilitare il bus.
+    // Preload HIGH before making CS pins outputs to avoid a LOW pulse.
+    digitalWrite(8, HIGH);
+    digitalWrite(9, HIGH);
+    digitalWrite(10, HIGH);
     pinMode(8, OUTPUT);
     pinMode(9, OUTPUT);
     pinMode(10, OUTPUT);
+    // Deselect all shield devices before enabling the bus.
     deselect(8);
     deselect(9);
     deselect(10);
@@ -34,8 +38,8 @@ void FastSpiBus::beginTransfer(uint32_t clockHz) {
 
   if (usesDirectSpi(spi_)) {
     if (configuredClockHz_ != clockHz) {
-      // La libreria del core calcola correttamente i divisori per R3 e R4.
-      // Dopo endTransaction la configurazione hardware rimane attiva.
+      // The core library calculates the correct divisors for R3 and R4.
+      // The hardware configuration remains active after endTransaction().
       spi_->beginTransaction(SPISettings(clockHz, MSBFIRST, SPI_MODE0));
       spi_->endTransaction();
       configuredClockHz_ = clockHz;
