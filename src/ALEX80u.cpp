@@ -4,33 +4,33 @@
 // PRIVATE -----------------------------------------
 
 void ALEX80u::mcp1_pinMode(int pin, byte mode) {
-  uint8_t reg;
-  if (pin < 8) reg = 0x00;
-  else reg = 0x01;
-  uint8_t iodir = this->mcpRead(10, reg);
-  if (mode == OUTPUT) iodir &= ~(1 << pin);
-  else if (mode == INPUT) iodir |= (1 << pin);
-  this->mcpWrite(10, reg, iodir);
+    uint8_t reg = (pin < 8) ? 0x00 : 0x01;
+    uint8_t bit = pin & 0x07;
+    uint8_t iodir = this->mcpRead(10, reg);
+    if (mode == OUTPUT) iodir &= ~(1 << bit);
+    else if (mode == INPUT) iodir |= (1 << bit);
+
+    mcpWrite(10, reg, iodir);
 }
 
 void ALEX80u::mcp2_pinMode(int pin, byte mode) {
-  uint8_t reg;
-  if (pin < 8) reg = 0x00;
-  else reg = 0x01;
-  uint8_t iodir = this->mcpRead(9, reg);
-  if (mode == OUTPUT) iodir &= ~(1 << pin);
-  else if (mode == INPUT) iodir |= (1 << pin);
-  this->mcpWrite(9, reg, iodir);
+    uint8_t reg = (pin < 8) ? 0x00 : 0x01;
+    uint8_t bit = pin & 0x07;
+    uint8_t iodir = this->mcpRead(9, reg);
+    if (mode == OUTPUT) iodir &= ~(1 << bit);
+    else if (mode == INPUT) iodir |= (1 << bit);
+
+    mcpWrite(9, reg, iodir);
 }
 
 void ALEX80u::mcp2_digitalWrite(int pin, byte value) {
-  uint8_t reg;
-  if (pin < 8) reg = 0x14;
-  else reg = 0x15;
-  uint8_t olat = this->mcpRead(9, reg);
-  if (value == HIGH) olat |= (1 << pin);
-  else if (value == LOW) olat &= ~(1 << pin);
-  this->mcpWrite(9, reg, olat);
+    uint8_t reg = (pin < 8) ? 0x14 : 0x15;  // OLATA / OLATB
+    uint8_t bit = pin & 0x07;
+    uint8_t olat = mcpRead(9, reg);
+    if (value == HIGH) olat |= (1 << bit);
+    else if (value == LOW) olat &= ~(1 << bit);
+
+    mcpWrite(9, reg, olat);
 }
 
 void ALEX80u::mcpWrite(uint8_t cs, uint8_t reg, uint8_t data) {
@@ -58,10 +58,7 @@ uint8_t ALEX80u::mcpRead(uint8_t cs, uint8_t reg) {
 
 // PUBLIC -----------------------------------------
 
-ALEX80u::ALEX80u(unsigned long ram_speed, unsigned long mcp_speed) {
-  this->rs = ram_speed;
-  this->ms = mcp_speed;
-}
+ALEX80u::ALEX80u(unsigned long ram_speed, unsigned long mcp_speed) : rs(ram_speed), ms(mcp_speed) {}
 
 void ALEX80u::begin_UNO() {
   // Imposto il DataBus in Input
@@ -101,49 +98,45 @@ void ALEX80u::begin_RAM() {
 void ALEX80u::begin_MCP() {
   // Imposto i CS
   SPI.begin();
-  pinMode(9, OUTPUT);   // CS MCP2
-  pinMode(10, OUTPUT);  // CS MCP1
-  delay(1);
+
+  // Better to set the latch high before setting pin as outputs
   digitalWrite(9, HIGH);
   digitalWrite(10, HIGH);
-  delay(1);
+  pinMode(9, OUTPUT);   // CS MCP2
+  pinMode(10, OUTPUT);  // CS MCP1
+
+  mcp2_digitalWrite(0, HIGH);   // RST
+  mcp2_digitalWrite(10, HIGH);  // BUSRQ
+
   // Inizializzo i pin di MCP1
-  this->mcp1_pinMode(0, INPUT);  // A0
-  this->mcp1_pinMode(1, INPUT);  // A1
-  this->mcp1_pinMode(2, INPUT);  // A2
-  this->mcp1_pinMode(3, INPUT);  // A3
-  this->mcp1_pinMode(4, INPUT);  // A4
-  this->mcp1_pinMode(5, INPUT);  // A5
-  this->mcp1_pinMode(6, INPUT);  // A6
-  this->mcp1_pinMode(7, OUTPUT);
-  this->mcp1_pinMode(8, INPUT);   // A7
-  this->mcp1_pinMode(9, INPUT);   // A8
-  this->mcp1_pinMode(10, INPUT);  // A9
-  this->mcp1_pinMode(11, INPUT);  // A10
-  this->mcp1_pinMode(12, INPUT);  // A11
-  this->mcp1_pinMode(13, INPUT);  // A12
-  this->mcp1_pinMode(14, INPUT);  // A13
-  this->mcp1_pinMode(15, OUTPUT);
+  mcp1_pinMode(0, INPUT);  // A0
+  mcp1_pinMode(1, INPUT);  // A1
+  mcp1_pinMode(2, INPUT);  // A2
+  mcp1_pinMode(3, INPUT);  // A3
+  mcp1_pinMode(4, INPUT);  // A4
+  mcp1_pinMode(5, INPUT);  // A5
+  mcp1_pinMode(6, INPUT);  // A6
+  mcp1_pinMode(8, INPUT);   // A7
+  mcp1_pinMode(9, INPUT);   // A8
+  mcp1_pinMode(10, INPUT);  // A9
+  mcp1_pinMode(11, INPUT);  // A10
+  mcp1_pinMode(12, INPUT);  // A11
+  mcp1_pinMode(13, INPUT);  // A12
+  mcp1_pinMode(14, INPUT);  // A13
+
   // Inizializzo i pin di MCP2
-  this->mcp2_pinMode(0, OUTPUT);  // RST
-  this->mcp2_pinMode(1, INPUT);   // HALT
-  this->mcp2_pinMode(2, INPUT);   // RFSH
-  this->mcp2_pinMode(3, INPUT);   // M1
-  this->mcp2_pinMode(4, INPUT);   // IORQ
-  this->mcp2_pinMode(5, INPUT);   // MREQ
-  this->mcp2_pinMode(6, INPUT);   // WR
-  this->mcp2_pinMode(7, OUTPUT);
-  this->mcp2_pinMode(8, INPUT);    // A14
-  this->mcp2_pinMode(9, INPUT);    // A15
-  this->mcp2_pinMode(10, OUTPUT);  // BUSRQ
-  this->mcp2_pinMode(11, INPUT);   // BUSACK
-  this->mcp2_pinMode(12, INPUT);   // RD
-  this->mcp2_pinMode(13, OUTPUT);
-  this->mcp2_pinMode(14, OUTPUT);
-  this->mcp2_pinMode(15, OUTPUT);
-  // Imposto alte le uscite
-  this->mcp2_digitalWrite(0, HIGH);   // RST
-  this->mcp2_digitalWrite(10, HIGH);  // BUSRQ
+  mcp2_pinMode(0, OUTPUT);  // RST
+  mcp2_pinMode(1, INPUT);   // HALT
+  mcp2_pinMode(2, INPUT);   // RFSH
+  mcp2_pinMode(3, INPUT);   // M1
+  mcp2_pinMode(4, INPUT);   // IORQ
+  mcp2_pinMode(5, INPUT);   // MREQ
+  mcp2_pinMode(6, INPUT);   // WR
+  mcp2_pinMode(8, INPUT);    // A14
+  mcp2_pinMode(9, INPUT);    // A15
+  mcp2_pinMode(10, OUTPUT);  // BUSRQ
+  mcp2_pinMode(11, INPUT);   // BUSACK
+  mcp2_pinMode(12, INPUT);   // RD
 }
 
 void ALEX80u::set_CLK(byte mode) {
@@ -163,18 +156,18 @@ void ALEX80u::set_WAIT(byte mode) {
 }
 
 void ALEX80u::set_RST(byte mode) {
-  this->mcp2_digitalWrite(0, mode);
+  mcp2_digitalWrite(0, mode);
 }
 
 void ALEX80u::set_BUSRQ(byte mode) {
-  this->mcp2_digitalWrite(10, mode);
+  mcp2_digitalWrite(10, mode);
 }
 
 uint16_t ALEX80u::read_ADDR() {
   uint16_t ret;
-  uint8_t addr_a = this->mcpRead(10, 0x12);  // MCP1 port A
-  uint8_t addr_b = this->mcpRead(10, 0x13);  // MCP1 port B
-  uint8_t addr_c = this->mcpRead(9, 0x13);   // MCP2 port B
+  uint8_t addr_a = mcpRead(10, 0x12);  // MCP1 port A
+  uint8_t addr_b = mcpRead(10, 0x13);  // MCP1 port B
+  uint8_t addr_c = mcpRead(9, 0x13);   // MCP2 port B
   bitWrite(ret, 0, bitRead(addr_a, 0));
   bitWrite(ret, 1, bitRead(addr_a, 1));
   bitWrite(ret, 2, bitRead(addr_a, 2));
@@ -196,8 +189,8 @@ uint16_t ALEX80u::read_ADDR() {
 
 uint8_t ALEX80u::read_CMD() {
   uint8_t ret;
-  uint8_t cmd_a = this->mcpRead(9, 0x12);  // MCP2 port A
-  uint8_t cmd_b = this->mcpRead(9, 0x13);  // MCP2 port B
+  uint8_t cmd_a = mcpRead(9, 0x12);  // MCP2 port A
+  uint8_t cmd_b = mcpRead(9, 0x13);  // MCP2 port B
   bitWrite(ret, 0, bitRead(cmd_a, 1));     // HALT
   bitWrite(ret, 1, bitRead(cmd_a, 2));     // RFSH
   bitWrite(ret, 2, bitRead(cmd_a, 3));     // M1
