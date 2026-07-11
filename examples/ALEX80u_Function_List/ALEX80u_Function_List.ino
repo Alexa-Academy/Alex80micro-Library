@@ -22,17 +22,17 @@ void setup() {
   while (!Serial)
     ;
 
-  a80u.begin_UNO();  // Imposta Input ed Output di Arduino UNO
-  a80u.begin_RAM();  // Inizializza la Ram
-  a80u.begin_MCP();  // Imposta Input ed Output dei due Mcp
+  a80u.begin_UNO();  // Configures Arduino Uno inputs and outputs
+  a80u.begin_RAM();  // Initializes the SRAM
+  a80u.begin_MCP();  // Configures inputs and outputs of both MCPs
 
-  a80u.set_RST(LOW);  // HIGH | LOW - Imposta lo stato del pin RST
-  a80u.set_CLK(LOW);  // HIGH | LOW - Imposta lo stato del pin CLK
+  a80u.set_RST(LOW);  // HIGH | LOW - Sets the RST pin state
+  a80u.set_CLK(LOW);  // HIGH | LOW - Sets the CLK pin state
 
-  a80u.set_INT(HIGH);    // HIGH | LOW - Imposta lo stato del pin INT
-  a80u.set_NMI(HIGH);    // HIGH | LOW - Imposta lo stato del pin NMI
-  a80u.set_BUSRQ(HIGH);  // HIGH | LOW - Imposta lo stato del pin BUSRQ
-  a80u.set_WAIT(HIGH);   // HIGH | LOW - Imposta lo stato del pin WAIT
+  a80u.set_INT(HIGH);    // HIGH | LOW - Sets the INT pin state
+  a80u.set_NMI(HIGH);    // HIGH | LOW - Sets the NMI pin state
+  a80u.set_BUSRQ(HIGH);  // HIGH | LOW - Sets the BUSRQ pin state
+  a80u.set_WAIT(HIGH);   // HIGH | LOW - Sets the WAIT pin state
 
   uint8_t Cmd = a80u.read_CMD();  // b0: HALT | b1: RFSH | b2: M1 | b3: IORQ | b4: MREQ | b5: WR | b6: BUSAK | b7: RD
   HALT = bitRead(Cmd, 0);
@@ -44,16 +44,16 @@ void setup() {
   BUSAK = bitRead(Cmd, 6);
   RD = bitRead(Cmd, 7);
 
-  Addr = a80u.read_ADDR();  // Lettura AddressBus
+  Addr = a80u.read_ADDR();  // Reads the address bus
 
-  Data = a80u.read_RAM(Addr);  // Lettura Ram
-  a80u.write_RAM(Addr, Data);  // Scrittura Ram
+  Data = a80u.read_RAM(Addr);  // Reads SRAM
+  a80u.write_RAM(Addr, Data);  // Writes SRAM
 
-  a80u.pinMode_DATA(OUTPUT);  // INPUT | OUTPUT - Direzione DataBus
-  a80u.write_DATA(Data);      // Scrittura DataBus
+  a80u.pinMode_DATA(OUTPUT);  // INPUT | OUTPUT - Sets the data-bus direction
+  a80u.write_DATA(Data);      // Writes the data bus
 
-  a80u.pinMode_DATA(INPUT);  // INPUT | OUTPUT - Direzione DataBus
-  Data = a80u.read_DATA();   // Lettura DataBus
+  a80u.pinMode_DATA(INPUT);  // INPUT | OUTPUT - Sets the data-bus direction
+  Data = a80u.read_DATA();   // Reads the data bus
 }
 
 void loop() {
