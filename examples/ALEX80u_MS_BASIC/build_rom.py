@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Assemble ALEX80 MS BASIC and generate the Arduino PROGMEM array.
+"""Assemble ALEX80 MS BASIC and generate the Arduino PROGMEM header.
 
-This file lives in the private, git-ignored ``basic`` directory.
-It requires z88dk-z80asm, either in PATH or in ~/z88dk/bin.
+The private, git-ignored assembler sources live in ``basic`` and the generated
+header is written to ``generated/basic_rom.h``.  The script requires
+z88dk-z80asm, either in PATH or in ~/z88dk/bin.
 """
 
 from __future__ import annotations
@@ -20,14 +21,13 @@ from pathlib import Path
 ROM_SIZE = 0x2000
 FILL_BYTE = 0x00
 MODULES = (
-    ("int_alex80u.asm", 0x0000),
+    ("intmini.asm", 0x0000),
     ("basic.asm", 0x0150),
 )
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_DIR = SCRIPT_DIR.parent
-DEFAULT_OUTPUT = SCRIPT_DIR / "intROM.generated.txt"
-SKETCH = PROJECT_DIR / "examples" / "Alex80u_MS_BASIC" / "Alex80u_MS_BASIC.ino"
+EXAMPLE_DIR = Path(__file__).resolve().parent
+SOURCES_DIR = EXAMPLE_DIR / "basic"
+DEFAULT_OUTPUT = EXAMPLE_DIR / "generated" / "basic_rom.h"
 
 ARRAY_RE = re.compile(
     r"const\s+PROGMEM\s+byte\s+intROM(?:\s*\[[^\]]*\])?\s*=\s*\{"
@@ -36,13 +36,28 @@ ARRAY_RE = re.compile(
     re.DOTALL,
 )
 BYTE_RE = re.compile(r"0x([0-9A-Fa-f]{2})")
+TASM_DIRECTIVE_RE = re.compile(r"\.(BYTE|WORD|EQU|ORG)\b", re.IGNORECASE)
+TASM_LABEL_RE = re.compile(
+    r"^(?P<label>[A-Za-z_.$][A-Za-z0-9_.$]*)"
+    r"(?P<spacing>[ \t]+)"
+    r"(?P<opcode>ADC|ADD|AND|BIT|CALL|CCF|CP|CPD|CPDR|CPI|CPIR|CPL|DAA|"
+    r"DEC|DI|DJNZ|EI|EX|EXX|HALT|IM|IN|INC|IND|INDR|INI|INIR|JP|JR|LD|"
+    r"LDD|LDDR|LDI|LDIR|NEG|NOP|OR|OTDR|OTIR|OUT|OUTD|OUTI|POP|PUSH|RES|"
+    r"RET|RETI|RETN|RL|RLA|RLC|RLCA|RLD|RR|RRA|RRC|RRCA|RRD|RST|SBC|SCF|"
+    r"SET|SLA|SLL|SRA|SRL|SUB|XOR)\b",
+    re.IGNORECASE | re.MULTILINE,
+)
+ORG_RE = re.compile(
+    r"^(?P<indent>[ \t]*)ORG\s+(?P<address>[^\s;]+)(?P<suffix>.*)$",
+    re.IGNORECASE,
+)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Assemble int_alex80u.asm and basic.asm, merge them into an "
-            "8 KiB ROM and generate the intROM PROGMEM declaration."
+            "Assemble intmini.asm and basic.asm, merge them into an "
+            "8 KiB ROM and generate the intROM PROGMEM header."
         )
     )
     parser.add_argument(
@@ -50,7 +65,7 @@ def parse_args() -> argparse.Namespace:
         "--output",
         type=Path,
         default=DEFAULT_OUTPUT,
-        help=f"generated text file (default: {DEFAULT_OUTPUT})",
+        help=f"generated header (default: {DEFAULT_OUTPUT})",
     )
     parser.add_argument(
         "--assembler",
@@ -84,9 +99,10 @@ def find_assembler(explicit: Path | None) -> Path:
 def assemble_module(
     assembler: Path,
     source_name: str,
+    sources_dir: Path,
     build_dir: Path,
 ) -> bytes:
-    source = SCRIPT_DIR / source_name
+    source = sources_dir / source_name
     if not source.is_file():
         raise RuntimeError(f"source not found: {source}")
 
@@ -111,6 +127,48 @@ def assemble_module(
     return output.read_bytes()
 
 
+def convert_repeated_orgs(source: str) -> str:
+    """Replace later TASM ORG directives with explicit z88dk padding."""
+    org_count = 0
+    converted_lines: list[str] = []
+
+    for line in source.splitlines(keepends=True):
+        match = ORG_RE.match(line.rstrip("\r\n"))
+        if match is not None:
+            org_count += 1
+            if org_count > 1:
+                newline = line[len(line.rstrip("\r\n")) :]
+                line = (
+                    f"{match.group('indent')}DEFS {match.group('address')} - $"
+                    f"{match.group('suffix')}{newline}"
+                )
+        converted_lines.append(line)
+
+    return "".join(converted_lines)
+
+
+def prepare_sources(build_dir: Path) -> Path:
+    """Copy TASM-style sources and normalize their syntax for z88dk-z80asm."""
+    prepared_dir = build_dir / "sources"
+    shutil.copytree(SOURCES_DIR, prepared_dir)
+
+    for source in prepared_dir.rglob("*.asm"):
+        text = source.read_text(encoding="utf-8")
+        converted = TASM_DIRECTIVE_RE.sub(lambda match: match.group(1), text)
+        converted = convert_repeated_orgs(converted)
+        converted = TASM_LABEL_RE.sub(
+            lambda match: (
+                f"{match.group('label')}:"
+                f"{match.group('spacing')}{match.group('opcode')}"
+            ),
+            converted,
+        )
+        if converted != text:
+            source.write_text(converted, encoding="utf-8")
+
+    return prepared_dir
+
+
 def build_rom(assembler: Path) -> tuple[bytes, list[tuple[str, int, int]]]:
     rom = bytearray([FILL_BYTE]) * ROM_SIZE
     ranges: list[tuple[int, int, str]] = []
@@ -118,8 +176,9 @@ def build_rom(assembler: Path) -> tuple[bytes, list[tuple[str, int, int]]]:
 
     with tempfile.TemporaryDirectory(prefix="alex80-basic-") as temporary:
         build_dir = Path(temporary)
+        sources_dir = prepare_sources(build_dir)
         for source_name, origin in MODULES:
-            binary = assemble_module(assembler, source_name, build_dir)
+            binary = assemble_module(assembler, source_name, sources_dir, build_dir)
             end = origin + len(binary)
 
             if end > ROM_SIZE:
@@ -145,7 +204,11 @@ def build_rom(assembler: Path) -> tuple[bytes, list[tuple[str, int, int]]]:
 
 def format_array(rom: bytes) -> str:
     lines = [
-        "// Generated by basic/build_rom.py; do not edit byte values manually.",
+        "#pragma once",
+        "",
+        "#include <Arduino.h>",
+        "",
+        "// Generated by build_rom.py; do not edit byte values manually.",
         "const PROGMEM byte intROM[] = {",
     ]
     for offset in range(0, len(rom), 16):
@@ -156,10 +219,10 @@ def format_array(rom: bytes) -> str:
     return "\n".join(lines) + "\n"
 
 
-def read_sketch_rom() -> bytes | None:
-    if not SKETCH.is_file():
+def read_rom_header(path: Path) -> bytes | None:
+    if not path.is_file():
         return None
-    match = ARRAY_RE.search(SKETCH.read_text(encoding="utf-8"))
+    match = ARRAY_RE.search(path.read_text(encoding="utf-8"))
     if match is None:
         return None
     return bytes(int(value, 16) for value in BYTE_RE.findall(match.group("body")))
@@ -188,19 +251,19 @@ def main() -> int:
         print(f"SHA-256: {digest}")
         print(f"Generated: {output}")
 
-        current = read_sketch_rom()
+        current = read_rom_header(output)
         if current is None:
-            print("Sketch comparison: intROM not found")
+            print("Generated header comparison: intROM not found")
         elif current == rom:
-            print("Sketch comparison: identical")
+            print("Generated header comparison: identical")
         else:
             common = min(len(current), len(rom))
             differences = sum(
                 current[index] != rom[index] for index in range(common)
             ) + abs(len(current) - len(rom))
             print(
-                f"Sketch comparison: different "
-                f"({differences} byte positions, sketch size {len(current)})"
+                f"Generated header comparison: different "
+                f"({differences} byte positions, header size {len(current)})"
             )
         return 0
     except (OSError, RuntimeError) as error:

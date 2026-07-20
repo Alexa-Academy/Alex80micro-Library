@@ -80,6 +80,7 @@ test_build/
 # Basic source
 # =========================
 basic/
+generated/basic_rom.h
 
 
 # =========================

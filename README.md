@@ -62,6 +62,22 @@ Please open an issue or submit a pull request.
 
 This project is released under the terms of the license included in this repository.
 
+## Microsoft BASIC Example
+
+This example does not include the Microsoft BASIC source code or ROM image.
+
+Before generating the ROM image, the BASIC boot code must be adapted to work with the ALEX80u library.
+
+1. Obtain a compatible copy of the BASIC source files.
+2. Apply the required ALEX80u boot code modifications.
+3. Copy the required files into the `basic/` directory.
+4. Run `build_rom.py` to generate `generated/basic_rom.h`.
+5. Open `ALEX80u_MS_BASIC.ino` with the Arduino IDE and compile the sketch.
+
+Documentation describing the required modifications will be published separately.
+
+Users are responsible for obtaining the BASIC sources legally and for complying with the applicable copyright and licence terms.
+
 ## Learn More
 
 Website: https://www.alexa-academy.it
